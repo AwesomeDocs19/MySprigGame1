@@ -7,7 +7,7 @@ const bgst = "f";
 
 
 ///\\\
-const POINTS_FOR_SHIELD = 25
+const POINTS_FOR_SHIELD = 50
 ///\\\
 
 const PLAYER_SPRITE = bitmap`
@@ -150,10 +150,17 @@ onInput("a", () => {
 let POINTS = 0
 let SHIELD = 0
 
-const updatePointsText = () => {
-  addText(`Points: ${POINTS}`, {
-    x: 5,
-    y: 15
+const updateText = () => {
+  addText(`Points:${POINTS}`, {
+    x: 2,
+    y: 15,
+    color: color`3`
+  })
+
+   addText(`S\n${SHIELD}`, {
+    x: 17,
+    y: 14,
+    color: color`5`
   })
 }
 
@@ -172,20 +179,20 @@ const addShield = (amount = 1) => {
   updateShield()
 }
 
-const addPoints = (amount = 5) => {  
-  POINTS += amount
-  updatePointsText()
-
-  if (POINTS === POINTS_FOR_SHIELD) {
+const addPoints = () => {  
+  POINTS += Math.floor((Math.random() * 5) + 1)
+  if (POINTS >= POINTS_FOR_SHIELD) {
     POINTS -= POINTS_FOR_SHIELD
     addShield()
   }
+  
+  updateText()
 }
 
-updatePointsText()
+updateText()
 
 const createRandomSprites = (numSprites = -1) => {
-  numSprites = numSprites === -1 ? Math.floor(Math.random() * 4) + 1 : numSprites; 
+  numSprites = numSprites === -1 ? Math.floor(Math.random() * 5) + 1 : numSprites;  
   for (let i = 0; i < numSprites; i++) {
     const randomX = width()-1; // Generate a random x position
     const randomY = Math.floor(Math.random() * height()); // Generate a random y position
@@ -196,6 +203,8 @@ const createRandomSprites = (numSprites = -1) => {
 }
 
 createRandomSprites();
+
+let newSpawnInterval
 
 const moveRandomSprites = () => {
   const playerSprite = getFirst(player);
@@ -222,8 +231,12 @@ const moveRandomSprites = () => {
       sprite.remove();
       addPoints()
 
-      setTimeout(() =>
-      createRandomSprites(2), 500)
+      if (!newSpawnInterval) {
+        newSpawnInterval = setTimeout(() => {
+          createRandomSprites()
+          newSpawnInterval = undefined
+        }, 500)
+      }
     } else {
       sprite.x -=1
     }
