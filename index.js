@@ -97,10 +97,10 @@ onInput("a", () => {
   getFirst(player).x += -1;
 });
 
-const createRandomSprites = () => {
-  const numSprites = Math.floor(Math.random() * 5) + 1; // Generate a random number of sprites between 1 and 5
+const createRandomSprites = (numSprites = -1) => {
+  numSprites = numSprites === -1 ? Math.floor(Math.random() * 5) + 1 : numSprites; // Generate a random number of sprites between 1 and 5
   for (let i = 0; i < numSprites; i++) {
-    const randomX = Math.floor(Math.random() * width()); // Generate a random x position
+    const randomX = width()-1; // Generate a random x position
     const randomY = Math.floor(Math.random() * height()); // Generate a random y position
     addSprite(randomX, randomY, goal);
   }
@@ -110,13 +110,28 @@ createRandomSprites();
 
 const moveRandomSprites = () => {
   const playerSprite = getFirst(player);
+  if (!player){
+    return
+  }
   const randomSprites = getAll(goal);
 
   randomSprites.forEach(sprite => {
-    if (sprite.x > playerSprite.x) {
-      sprite.x -= 1;
-    } else if (sprite.x === playerSprite.x) {
+    if (sprite.x === playerSprite.x && sprite.y === playerSprite.y) {
+      playerSprite.remove()
+      addText("You died!", {
+        x: 3,
+        y: 3,
+        color: color`1`
+      })
+    }
+    
+    if (sprite.x === 0) {
       sprite.remove();
+
+      setTimeout(() =>
+      createRandomSprites(1), 500)
+    } else {
+      sprite.x -=1
     }
   });
 }
@@ -139,3 +154,5 @@ const handlePlayerMovement = (direction) => {
 }
 
 afterInput(handlePlayerMovement)
+
+setInterval(moveRandomSprites, 500)
