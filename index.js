@@ -2,7 +2,7 @@
 const player = "p";
 const box = "b";
 const goal = "g";
-const wall = "w";
+const goal2 = "w";
 
 // assign bitmap art to each sprite
 setLegend(
@@ -40,23 +40,23 @@ setLegend(
 ................
 ................
 ................`],
-  [ wall, bitmap`
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000
-0000000000000000`]
+  [ goal2, bitmap`
+................
+................
+................
+................
+................
+.......C........
+.......CCC......
+......CC6CCC....
+.....CCCCCCC....
+....C6CCCCC6C...
+....CCCCCCCCCC..
+................
+................
+................
+................
+................`],
 );
 
 // create game levels
@@ -74,7 +74,7 @@ p....
 const currentLevel = levels[level];
 setMap(currentLevel);
 
-setSolids([ player, box, wall ]); // other sprites cannot go inside of these sprites
+setSolids([ player, box ]); // other sprites cannot go inside of these sprites
 
 // allow certain sprites to push certain other sprites
 setPushables({
@@ -102,7 +102,9 @@ const createRandomSprites = (numSprites = -1) => {
   for (let i = 0; i < numSprites; i++) {
     const randomX = width()-1; // Generate a random x position
     const randomY = Math.floor(Math.random() * height()); // Generate a random y position
-    addSprite(randomX, randomY, goal);
+
+    const isCorn = Math.random() <= 0.2
+    addSprite(randomX, randomY, isCorn ? goal2 : goal);
   }
 }
 
@@ -113,7 +115,7 @@ const moveRandomSprites = () => {
   if (!player){
     return
   }
-  const randomSprites = getAll(goal);
+  const randomSprites = [...getAll(goal2),...getAll(goal)];
 
   randomSprites.forEach(sprite => {
     if (sprite.x === playerSprite.x && sprite.y === playerSprite.y) {
@@ -129,7 +131,7 @@ const moveRandomSprites = () => {
       sprite.remove();
 
       setTimeout(() =>
-      createRandomSprites(1), 500)
+      createRandomSprites(2), 500)
     } else {
       sprite.x -=1
     }
