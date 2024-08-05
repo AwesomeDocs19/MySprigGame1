@@ -5,9 +5,12 @@ const goal = "g";
 const goal2 = "w";
 const bgst = "f";
 
-// assign bitmap art to each sprite
-setLegend(
-  [ player, bitmap`
+
+///\\\
+const POINTS_FOR_SHIELD = 25
+///\\\
+
+const PLAYER_SPRITE = bitmap`
 ................
 ................
 .........0......
@@ -23,7 +26,32 @@ setLegend(
 ..00000.........
 ....0.0.........
 ....0.0.........
-....0.0.........`],
+....0.0.........`
+const PLAYER_SHIELD_SPRITE = bitmap`
+............00..
+.............0..
+.........0.L.00.
+........030.L.0.
+........030..L00
+.......04440.L.0
+.......04040.L.0
+..0....04430.L.0
+.0D0..04440..L.0
+.040.04440...L.0
+.04004440...LL00
+.0444440....L.0.
+..00000....LL.0.
+....0.0....L..0.
+....0.0...LL.00.
+....0.0......0..`
+
+let CURRENT_PLAYER_SPRITE = PLAYER_SPRITE
+
+const updateLegend = () => {
+  
+// assign bitmap art to each sprite
+setLegend(
+  [ player, CURRENT_PLAYER_SPRITE],
   [ goal, bitmap`
 ................
 ................
@@ -75,9 +103,10 @@ setLegend(
 ...............0
 ....L...........
 ................`]
-  
 );
+}
 
+updateLegend()
 setBackground(bgst)
 
 // create game levels
@@ -119,6 +148,7 @@ onInput("a", () => {
 });
 
 let POINTS = 0
+let SHIELD = 0
 
 const updatePointsText = () => {
   addText(`Points: ${POINTS}`, {
@@ -126,6 +156,32 @@ const updatePointsText = () => {
     y: 15
   })
 }
+
+const updateShield = () => {
+  if (SHIELD > 0) {
+    CURRENT_PLAYER_SPRITE = PLAYER_SHIELD_SPRITE
+  } else {
+    CURRENT_PLAYER_SPRITE = PLAYER_SPRITE
+  }
+
+  updateLegend()
+}
+
+const addShield = (amount = 1) => {
+  SHIELD += amount
+  updateShield()
+}
+
+const addPoints = (amount = 5) => {  
+  POINTS += amount
+  updatePointsText()
+
+  if (POINTS === POINTS_FOR_SHIELD) {
+    POINTS -= POINTS_FOR_SHIELD
+    addShield()
+  }
+}
+
 updatePointsText()
 
 const createRandomSprites = (numSprites = -1) => {
@@ -150,19 +206,21 @@ const moveRandomSprites = () => {
 
   randomSprites.forEach(sprite => {
     if (sprite.x === playerSprite.x && sprite.y === playerSprite.y) {
-      playerSprite.remove()
-      addText("You died!", {
-        x: 3,
-        y: 3,
-        color: color`1`
-      })
+      if (SHIELD > 0) {
+        addShield(-1)
+      } else {
+        playerSprite.remove()
+        addText("You died!", {
+          x: 3,
+          y: 3,
+          color: color`1`
+        }) 
+      }
     }
     
     if (sprite.x === 0) {
       sprite.remove();
-
-      POINTS += 5
-      updatePointsText()
+      addPoints()
 
       setTimeout(() =>
       createRandomSprites(2), 500)
