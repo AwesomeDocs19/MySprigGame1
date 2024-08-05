@@ -23,23 +23,6 @@ setLegend(
 ................
 ................
 ................`],
-  [ box, bitmap`
-................
-................
-................
-................
-................
-.....L..........
-....LL..........
-...LLL..........
-....LL..........
-.....L111.......
-......111.......
-......111.......
-......111.......
-......111.......
-................
-................`],
   [ goal, bitmap`
 ................
 ................
@@ -80,38 +63,11 @@ setLegend(
 let level = 0; // this tracks the level we are on
 const levels = [
   map`
-p..g.
-..g.g
-.bg..
-g.g.g
-.g.g.`,
-  map`
 p....
-gggg.
-gggg.
-.b...
-g.g..`,
-  map`
-p.gg.
-.b...
-gg..g
-g.g..
-.g.g.`,
-  map`
-p....
-p.gg.
-p.g.g
-p.g.g
-p...b`,
-  map`
-ggg
-gpg
-ggb`,
-  map`
-p..g
-..wg
-gg..
-.gbg`
+.....
+.....
+.....
+.....`,
 ];
 
 // set the map displayed to the current level
@@ -125,7 +81,6 @@ setPushables({
   [player]: []
 });
 
-// inputs for player movement control
 onInput("s", () => {
   getFirst(player).y += 1; // positive y is downwards
 });
@@ -142,85 +97,45 @@ onInput("a", () => {
   getFirst(player).x += -1;
 });
 
-
-// input to reset level
-onInput("j", () => {
-  const currentLevel = levels[level]; // get the original map of the level
-
-  // make sure the level exists before we load it
-  if (currentLevel !== undefined) {
-    clearText("");
-    setMap(currentLevel);
+const createRandomSprites = () => {
+  const numSprites = Math.floor(Math.random() * 5) + 1; // Generate a random number of sprites between 1 and 5
+  for (let i = 0; i < numSprites; i++) {
+    const randomX = Math.floor(Math.random() * width()); // Generate a random x position
+    const randomY = Math.floor(Math.random() * height()); // Generate a random y position
+    addSprite(randomX, randomY, goal);
   }
-});
+}
 
-// these get run after every input
-afterInput(() => {
-  // count the number of tiles with goals
-  const targetNumber = tilesWith(goal).length;
-  
-  // count the number of tiles with goals and boxes
-  const numberCovered = tilesWith(goal, box).length;
+createRandomSprites();
 
-  // if the number of goals is the same as the number of goals covered
-  // all goals are covered and we can go to the next level
-  if (numberCovered === targetNumber) {
-    // increase the current level number
-    level = level + 1;
+const moveRandomSprites = () => {
+  const playerSprite = getFirst(player);
+  const randomSprites = getAll(goal);
 
-    const currentLevel = levels[level];
-
-    // make sure the level exists and if so set the map
-    // otherwise, we have finished the last level, there is no level
-    // after the last level
-    if (currentLevel !== undefined) {
-      setMap(currentLevel);
-    } else {
-      addText("you win!", { y: 4, color: color`3` });
+  randomSprites.forEach(sprite => {
+    if (sprite.x > playerSprite.x) {
+      sprite.x -= 1;
+    } else if (sprite.x === playerSprite.x) {
+      sprite.remove();
     }
-  }
-  // Player movement controls
-onInput("w", () => movePlayer("up"));
-onInput("a", () => movePlayer("left"));
-onInput("s", () => movePlayer("down"));
-onInput("d", () => movePlayer("right"));
+  });
+}
 
-// Function to handle player movement and box pushing
-const movePlayer = (direction) => {
+const handlePlayerMovement = (direction) => {
   const playerSprite = getFirst(player);
   const playerX = playerSprite.x;
   const playerY = playerSprite.y;
 
-  // Calculate the next coordinates based on the direction
   const nextX = direction === "left" ? playerX - 1 : direction === "right" ? playerX + 1 : playerX;
   const nextY = direction === "up" ? playerY - 1 : direction === "down" ? playerY + 1 : playerY;
 
-  // Find the sprites in the next tile
   const spritesInNextTile = getTile(nextX, nextY);
+  const randomSpriteCollision = spritesInNextTile.some(sprite => sprite.type === "randomSprite");
 
-  // Check if there is a box in the next tile to push
-  const boxToPush = spritesInNextTile.find(sprite => sprite.type === box);
-
-  if (boxToPush) {
-    // Calculate the next coordinates for the box
-    const nextBoxX = direction === "left" ? nextX - 1 : direction === "right" ? nextX + 1 : nextX;
-    const nextBoxY = direction === "up" ? nextY - 1 : direction === "down" ? nextY + 1 : nextY;
-
-    // Check if the next tile is empty or has a goal
-    if (!getTile(nextBoxX, nextBoxY).some(sprite => sprite.type === wall)) {
-      // Move both the player and the box one block
-      playerSprite.x = nextX;
-      playerSprite.y = nextY;
-      boxToPush.x = nextBoxX;
-      boxToPush.y = nextBoxY;
-    }
-  } else {
-    // Check if the next tile is empty
-    if (!spritesInNextTile.some(sprite => sprite.type === wall)) {
-      // Move only the player by one block in the specified direction
-      playerSprite.x = nextX;
-      playerSprite.y = nextY;
-    }
+  if (!randomSpriteCollision) {
+    playerSprite.x = nextX;
+    playerSprite.y = nextY;
   }
 }
-});
+
+afterInput(handlePlayerMovement)
