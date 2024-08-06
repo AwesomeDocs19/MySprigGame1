@@ -179,8 +179,8 @@ const addShield = (amount = 1) => {
   updateShield()
 }
 
-const addPoints = () => {  
-  POINTS += Math.floor((Math.random() * 5) + 1)
+const addPoints = () => {
+  POINTS += Math.floor((Math.random() * 4) + 1)
   if (POINTS >= POINTS_FOR_SHIELD) {
     POINTS -= POINTS_FOR_SHIELD
     addShield()
@@ -205,6 +205,7 @@ const createRandomSprites = (numSprites = -1) => {
 createRandomSprites();
 
 let newSpawnInterval
+let elapsed = 0
 
 const moveRandomSprites = () => {
   const playerSprite = getFirst(player);
@@ -219,7 +220,7 @@ const moveRandomSprites = () => {
         addShield(-1)
       } else {
         playerSprite.remove()
-        addText("You died!", {
+        addText(`You died!\nTime:${elapsed}`, {
           x: 3,
           y: 3,
           color: color`1`
@@ -262,4 +263,47 @@ const handlePlayerMovement = (direction) => {
 
 afterInput(handlePlayerMovement)
 
-setInterval(moveRandomSprites, 500)
+
+let moveInterval
+const resetMoveInterval = (ms = 500) => {
+  if (moveInterval) {
+    clearInterval(moveInterval)
+  }
+  
+  moveInterval = setInterval(moveRandomSprites, ms)
+}
+resetMoveInterval()
+
+setInterval(() => {
+  elapsed += 1
+  ms = -1
+  
+  switch (elapsed) {
+    case 30:
+      ms = 450;
+      break;
+    case 60:
+      ms = 400;
+      break;
+    case 120:
+      ms = 350
+      break;
+    case 300:
+      ms = 300
+      break;
+    case 600:
+      ms = 150;
+      break;
+    case 800:
+      ms = 100;
+      break;
+    case 2000:
+      ms = 50;
+      break;
+    default:
+      break;
+  }
+  if (ms === -1) {return}
+  resetMoveInterval(ms)
+  
+}, 1000)
