@@ -1,8 +1,11 @@
 // Define the sprites in our game
 const player = "p";
 const box = "b";
-const goal = "g";
-const goal2 = "w";
+
+const goal = "z";
+const goal2 = "y";
+const goal3 = "x";
+
 const bgst = "f";
 
 const POINTS_FOR_SHIELD = 50;
@@ -50,6 +53,8 @@ let elapsed = 0;
 let newSpawnInterval;
 let moveInterval;
 
+const goalSprites = [goal, goal2, goal3];
+
 const levels = [
   map`
 p....
@@ -63,6 +68,7 @@ p....
 const updateLegend = () => {
   setLegend(
     [player, CURRENT_PLAYER_SPRITE],
+    
     [goal, bitmap`
 ................
 ................
@@ -97,6 +103,24 @@ const updateLegend = () => {
 ................
 ................
 ................`],
+    [goal3, bitmap`
+................
+................
+...000000.......
+..00CCCC0.......
+..0CCCCC00000...
+..0C0CCCCCCD0...
+..0CCCCCCCCD00..
+..000CCC3CDCC00.
+....0CDCCCDCCC0.
+...D0C0CCCDD.C0.
+....0CCDCC0CCC0.
+....0CCDCCCCC00.
+....00000CCCC0..
+........0CC000..
+........0000....
+................`],
+    
     [bgst, bitmap`
 ................
 ................
@@ -113,7 +137,7 @@ const updateLegend = () => {
 ................
 ...............0
 ....L...........
-................`]
+................`],
   );
 };
 
@@ -160,8 +184,8 @@ const createRandomSprites = (numSprites = -1) => {
   for (let i = 0; i < numSprites; i++) {
     const randomX = width() - 1;
     const randomY = Math.floor(Math.random() * height());
-    const isCorn = Math.random() <= 0.2;
-    addSprite(randomX, randomY, isCorn ? goal2 : goal);
+    const goalSprite = goalSprites[Math.floor(Math.random() * goalSprites.length)];
+    addSprite(randomX, randomY, goalSprite);
   }
 };
 
@@ -170,7 +194,7 @@ const moveRandomSprites = () => {
   const playerSprite = getFirst(player);
   if (!playerSprite) return;
   
-  const randomSprites = [...getAll(goal2), ...getAll(goal)];
+  const randomSprites = goalSprites.map(g => getAll(g)).flat()
   randomSprites.forEach(sprite => {
     if (sprite.x === playerSprite.x && sprite.y === playerSprite.y) {
       if (SHIELD > 0) {
