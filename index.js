@@ -1,14 +1,11 @@
-// define the sprites in our game
+// Define the sprites in our game
 const player = "p";
 const box = "b";
 const goal = "g";
 const goal2 = "w";
 const bgst = "f";
 
-
-///\\\
-const POINTS_FOR_SHIELD = 50
-///\\\
+const POINTS_FOR_SHIELD = 50;
 
 const PLAYER_SPRITE = bitmap`
 ................
@@ -26,7 +23,7 @@ const PLAYER_SPRITE = bitmap`
 ..00000.........
 ....0.0.........
 ....0.0.........
-....0.0.........`
+....0.0.........`;
 const PLAYER_SHIELD_SPRITE = bitmap`
 ............00..
 .............0..
@@ -43,16 +40,30 @@ const PLAYER_SHIELD_SPRITE = bitmap`
 ..00000....LL.0.
 ....0.0....L..0.
 ....0.0...LL.00.
-....0.0......0..`
+....0.0......0..`;
 
-let CURRENT_PLAYER_SPRITE = PLAYER_SPRITE
+let CURRENT_PLAYER_SPRITE = PLAYER_SPRITE;
+let POINTS = 0;
+let SHIELD = 0;
+let level = 0;
+let elapsed = 0;
+let newSpawnInterval;
+let moveInterval;
 
+const levels = [
+  map`
+p....
+.....
+.....
+.....
+.....`,
+];
+
+// Function to update the legend
 const updateLegend = () => {
-  
-// assign bitmap art to each sprite
-setLegend(
-  [ player, CURRENT_PLAYER_SPRITE],
-  [ goal, bitmap`
+  setLegend(
+    [player, CURRENT_PLAYER_SPRITE],
+    [goal, bitmap`
 ................
 ................
 ................
@@ -69,7 +80,7 @@ setLegend(
 ................
 ................
 ................`],
-  [ goal2, bitmap`
+    [goal2, bitmap`
 ................
 ................
 ................
@@ -86,7 +97,7 @@ setLegend(
 ................
 ................
 ................`],
-  [bgst, bitmap`
+    [bgst, bitmap`
 ................
 ................
 ..............3.
@@ -103,147 +114,94 @@ setLegend(
 ...............0
 ....L...........
 ................`]
-);
-}
+  );
+};
 
-updateLegend()
-setBackground(bgst)
-
-// create game levels
-let level = 0; // this tracks the level we are on
-const levels = [
-  map`
-p....
-.....
-.....
-.....
-.....`,
-];
-
-// set the map displayed to the current level
-const currentLevel = levels[level];
-setMap(currentLevel);
-
-setSolids([ player, box ]); // other sprites cannot go inside of these sprites
-
-// allow certain sprites to push certain other sprites
-setPushables({
-  [player]: []
-});
-
-onInput("s", () => {
-  getFirst(player).y += 1; // positive y is downwards
-});
-
-onInput("d", () => {
-  getFirst(player).x += 1;
-});
-
-onInput("w", () => {
-  getFirst(player).y += -1; // positive y is upwards
-});
-
-onInput("a", () => {
-  getFirst(player).x += -1;
-});
-
-let POINTS = 0
-let SHIELD = 0
-
+// Function to update the text
 const updateText = () => {
   addText(`Points:${POINTS}`, {
     x: 2,
     y: 15,
     color: color`3`
-  })
+  });
 
-   addText(`S\n${SHIELD}`, {
+  addText(`S\n${SHIELD}`, {
     x: 17,
     y: 14,
     color: color`5`
-  })
-}
+  });
+};
 
+// Function to update the shield
 const updateShield = () => {
-  if (SHIELD > 0) {
-    CURRENT_PLAYER_SPRITE = PLAYER_SHIELD_SPRITE
-  } else {
-    CURRENT_PLAYER_SPRITE = PLAYER_SPRITE
-  }
+  CURRENT_PLAYER_SPRITE = SHIELD > 0 ? PLAYER_SHIELD_SPRITE : PLAYER_SPRITE;
+  updateLegend();
+};
 
-  updateLegend()
-}
-
+// Function to add shield
 const addShield = (amount = 1) => {
-  SHIELD += amount
-  updateShield()
-}
+  SHIELD += amount;
+  updateShield();
+};
 
+// Function to add points
 const addPoints = () => {
-  POINTS += Math.floor((Math.random() * 4) + 1)
+  POINTS += Math.floor((Math.random() * 4) + 1);
   if (POINTS >= POINTS_FOR_SHIELD) {
-    POINTS -= POINTS_FOR_SHIELD
-    addShield()
+    POINTS -= POINTS_FOR_SHIELD;
+    addShield();
   }
-  
-  updateText()
-}
+  updateText();
+};
 
-updateText()
-
+// Function to create random sprites
 const createRandomSprites = (numSprites = -1) => {
-  numSprites = numSprites === -1 ? Math.floor(Math.random() * 5) + 1 : numSprites;  
+  numSprites = numSprites === -1 ? Math.floor(Math.random() * 5) + 1 : numSprites;
   for (let i = 0; i < numSprites; i++) {
-    const randomX = width()-1; // Generate a random x position
-    const randomY = Math.floor(Math.random() * height()); // Generate a random y position
-
-    const isCorn = Math.random() <= 0.2
+    const randomX = width() - 1;
+    const randomY = Math.floor(Math.random() * height());
+    const isCorn = Math.random() <= 0.2;
     addSprite(randomX, randomY, isCorn ? goal2 : goal);
   }
-}
+};
 
-createRandomSprites();
-
-let newSpawnInterval
-let elapsed = 0
-
+// Function to move random sprites
 const moveRandomSprites = () => {
   const playerSprite = getFirst(player);
-  if (!player){
-    return
-  }
-  const randomSprites = [...getAll(goal2),...getAll(goal)];
-
+  if (!playerSprite) return;
+  
+  const randomSprites = [...getAll(goal2), ...getAll(goal)];
   randomSprites.forEach(sprite => {
     if (sprite.x === playerSprite.x && sprite.y === playerSprite.y) {
       if (SHIELD > 0) {
-        addShield(-1)
+        addShield(-1);
       } else {
-        playerSprite.remove()
+        playerSprite.remove();
         addText(`You died!\nTime:${elapsed}`, {
           x: 3,
           y: 3,
           color: color`1`
-        }) 
+        });
       }
     }
     
     if (sprite.x === 0) {
       sprite.remove();
-      addPoints()
+      addPoints();
 
       if (!newSpawnInterval) {
         newSpawnInterval = setTimeout(() => {
-          createRandomSprites()
-          newSpawnInterval = undefined
-        }, 500)
+          createRandomSprites();
+          newSpawnInterval = undefined;
+        }, 500);
       }
     } else {
-      sprite.x -=1
+      sprite.x -= 1;
     }
   });
-}
+};
 
+// Function to handle player movement
 const handlePlayerMovement = (direction) => {
   const playerSprite = getFirst(player);
   const playerX = playerSprite.x;
@@ -259,25 +217,42 @@ const handlePlayerMovement = (direction) => {
     playerSprite.x = nextX;
     playerSprite.y = nextY;
   }
-}
+};
 
-afterInput(handlePlayerMovement)
-
-
-let moveInterval
+// Function to reset move interval
 const resetMoveInterval = (ms = 500) => {
   if (moveInterval) {
-    clearInterval(moveInterval)
+    clearInterval(moveInterval);
   }
   
-  moveInterval = setInterval(moveRandomSprites, ms)
-}
-resetMoveInterval()
+  moveInterval = setInterval(moveRandomSprites, ms);
+};
 
+// Initialize the game
+const initGame = () => {
+  updateLegend();
+  setBackground(bgst);
+  setMap(levels[level]);
+  setSolids([player, box]);
+  setPushables({ [player]: [] });
+  updateText();
+  createRandomSprites();
+  resetMoveInterval();
+};
+
+initGame();
+
+// Input handlers
+onInput("s", () => handlePlayerMovement("down"));
+onInput("d", () => handlePlayerMovement("right"));
+onInput("w", () => handlePlayerMovement("up"));
+onInput("a", () => handlePlayerMovement("left"));
+
+// Interval to update elapsed time and adjust move interval
 setInterval(() => {
-  elapsed += 1
-  ms = -1
-  
+  elapsed += 1;
+  let ms = -1;
+
   switch (elapsed) {
     case 30:
       ms = 450;
@@ -286,10 +261,10 @@ setInterval(() => {
       ms = 400;
       break;
     case 120:
-      ms = 350
+      ms = 350;
       break;
     case 300:
-      ms = 300
+      ms = 300;
       break;
     case 600:
       ms = 150;
@@ -303,7 +278,6 @@ setInterval(() => {
     default:
       break;
   }
-  if (ms === -1) {return}
-  resetMoveInterval(ms)
-  
-}, 1000)
+  if (ms !== -1) resetMoveInterval(ms);
+
+}, 1000);
